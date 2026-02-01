@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -60,7 +61,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { CreateLeadDialog, EditLeadDialog } from '@/components/admin/leads';
+import { CreateLeadDialog, EditLeadDialog, BulkActionsBar } from '@/components/admin/leads';
 import type { Tables, Database } from '@/integrations/supabase/types';
 
 type ClientLead = Tables<'client_leads'>;
@@ -92,6 +93,7 @@ export default function LeadsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<ClientLead | null>(null);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 10;
@@ -144,6 +146,26 @@ export default function LeadsPage() {
       lead.county.toLowerCase().includes(search)
     );
   });
+
+  // Selection helpers (must be after filteredLeads is defined)
+  const allVisibleSelected = filteredLeads.length > 0 && filteredLeads.every(lead => selectedLeadIds.includes(lead.id));
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelectedLeadIds(prev => prev.filter(id => !filteredLeads.some(lead => lead.id === id)));
+    } else {
+      const visibleIds = filteredLeads.map(lead => lead.id);
+      setSelectedLeadIds(prev => [...new Set([...prev, ...visibleIds])]);
+    }
+  };
+
+  const toggleSelectLead = (leadId: string) => {
+    setSelectedLeadIds(prev => 
+      prev.includes(leadId) 
+        ? prev.filter(id => id !== leadId)
+        : [...prev, leadId]
+    );
+  };
 
   const formatStatus = (status: string) => {
     return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -254,6 +276,16 @@ export default function LeadsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Bulk Actions Bar */}
+          <BulkActionsBar
+            selectedCount={selectedLeadIds.length}
+            selectedIds={selectedLeadIds}
+            onClearSelection={() => setSelectedLeadIds([])}
+            onSuccess={fetchLeads}
+            canModifyData={canModifyData}
+            isAdmin={isAdmin}
+          />
+
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-pulse text-primary">Loading leads...</div>
@@ -268,6 +300,13 @@ export default function LeadsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={allVisibleSelected}
+                          onCheckedChange={toggleSelectAll}
+                          aria-label="Select all"
+                        />
+                      </TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Contact</TableHead>
                       <TableHead>County</TableHead>
@@ -279,7 +318,14 @@ export default function LeadsPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredLeads.map((lead) => (
-                      <TableRow key={lead.id}>
+                      <TableRow key={lead.id} className={selectedLeadIds.includes(lead.id) ? 'bg-muted/50' : ''}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedLeadIds.includes(lead.id)}
+                            onCheckedChange={() => toggleSelectLead(lead.id)}
+                            aria-label={`Select ${lead.client_first_name} ${lead.client_last_name}`}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">
                           {lead.client_first_name} {lead.client_last_name}
                         </TableCell>

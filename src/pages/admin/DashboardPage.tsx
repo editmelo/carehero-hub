@@ -8,13 +8,17 @@ import {
   AlertCircle,
   CheckCircle,
   UserPlus,
-  Calendar
+  Calendar,
+  FileCheck,
+  ArrowRight
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 interface DashboardStats {
   totalLeads: number;
@@ -42,6 +46,15 @@ interface UpcomingTask {
   client_lead_id: string;
 }
 
+interface PendingAssessment {
+  id: string;
+  client_name: string;
+  county: string;
+  assessment_scheduled_date: string | null;
+  referral_submitted_to: string;
+  loc_status: string | null;
+}
+
 export default function DashboardPage() {
   const { hasPortalAccess } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
@@ -54,6 +67,7 @@ export default function DashboardPage() {
   });
   const [recentLeads, setRecentLeads] = useState<RecentLead[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<UpcomingTask[]>([]);
+  const [pendingAssessments, setPendingAssessments] = useState<PendingAssessment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -72,6 +86,7 @@ export default function DashboardPage() {
         activeEnrollmentsResult,
         recentLeadsResult,
         upcomingTasksResult,
+        pendingAssessmentsResult,
       ] = await Promise.all([
         supabase.from('client_leads').select('id', { count: 'exact', head: true }),
         supabase.from('client_leads').select('id', { count: 'exact', head: true }).eq('lead_status', 'new_inquiry'),
@@ -79,6 +94,11 @@ export default function DashboardPage() {
         supabase.from('enrollment_pipeline').select('id', { count: 'exact', head: true }),
         supabase.from('client_leads').select('id, client_first_name, client_last_name, lead_status, created_at, county').order('created_at', { ascending: false }).limit(5),
         supabase.from('follow_up_tasks').select('id, task_description, due_date, priority, client_lead_id').eq('status', 'pending').order('due_date', { ascending: true }).limit(5),
+        supabase.from('internal_referral_tracking')
+          .select('id, client_name, county, assessment_scheduled_date, referral_submitted_to, loc_status')
+          .eq('loc_status', 'pending')
+          .eq('maximus_assessment_required', true)
+          .order('assessment_scheduled_date', { ascending: true }),
       ]);
 
       setStats({
@@ -96,6 +116,21 @@ export default function DashboardPage() {
 
       if (upcomingTasksResult.data) {
         setUpcomingTasks(upcomingTasksResult.data);
+      }
+
+      if (pendingAssessmentsResult.data) {
+        // Filter to show assessments this week or unscheduled
+        const now = new Date();
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        
+        const thisWeekAssessments = pendingAssessmentsResult.data.filter((assessment) => {
+          if (!assessment.assessment_scheduled_date) return true; // Show unscheduled ones
+          const assessmentDate = parseISO(assessment.assessment_scheduled_date);
+          return isWithinInterval(assessmentDate, { start: weekStart, end: weekEnd });
+        });
+        
+        setPendingAssessments(thisWeekAssessments.slice(0, 5));
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -317,6 +352,61 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Pending Assessments This Week */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileCheck className="h-5 w-5" />
+                Assessments This Week
+              </CardTitle>
+              <CardDescription>Referrals pending Maximus assessment</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin/referrals" className="flex items-center gap-1">
+                View All <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {pendingAssessments.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-8">
+                No assessments pending this week.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {pendingAssessments.map((assessment) => (
+                  <div key={assessment.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-medium">{assessment.client_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {assessment.county} County • {assessment.referral_submitted_to}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      {assessment.assessment_scheduled_date ? (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {format(parseISO(assessment.assessment_scheduled_date), 'EEE, MMM d')}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                          Not Scheduled
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

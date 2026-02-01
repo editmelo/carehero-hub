@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { 
   Search, 
   Filter, 
-  Plus, 
   MoreHorizontal, 
   Phone, 
   Mail, 
@@ -47,12 +45,12 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { CreateLeadDialog, EditLeadDialog } from '@/components/admin/leads';
 import type { Tables, Database } from '@/integrations/supabase/types';
 
 type ClientLead = Tables<'client_leads'>;
@@ -81,6 +79,7 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedLead, setSelectedLead] = useState<ClientLead | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 10;
@@ -198,6 +197,9 @@ export default function LeadsPage() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Client Leads</h1>
           <p className="text-muted-foreground">Manage and track all client inquiries</p>
         </div>
+        {canModifyData && (
+          <CreateLeadDialog onSuccess={fetchLeads} />
+        )}
       </div>
 
       {/* Filters */}
@@ -315,7 +317,12 @@ export default function LeadsPage() {
                                 <Eye className="h-4 w-4 mr-2" /> View Details
                               </DropdownMenuItem>
                               {canModifyData && (
-                                <DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedLead(lead);
+                                    setEditDialogOpen(true);
+                                  }}
+                                >
                                   <Edit className="h-4 w-4 mr-2" /> Edit Lead
                                 </DropdownMenuItem>
                               )}
@@ -457,6 +464,14 @@ export default function LeadsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Lead Dialog */}
+      <EditLeadDialog
+        lead={selectedLead}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSuccess={fetchLeads}
+      />
     </div>
   );
 }

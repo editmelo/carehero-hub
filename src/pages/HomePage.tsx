@@ -146,9 +146,9 @@ export default function HomePage() {
                 </Link>
               </div>
               <div className="mt-8 flex items-center gap-6">
-                <div className="flex -space-x-2">
+                <div className="flex gap-1.5">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <Star key={i} className="w-6 h-6 text-gold fill-gold" />
+                    <Star key={i} className="w-5 h-5 text-gold fill-gold/70" />
                   ))}
                 </div>
                 <p className="text-sm text-primary-foreground/80">

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Upload, X, FileImage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 import type { Tables, Database } from '@/integrations/supabase/types';
 
 type ClientLead = Tables<'client_leads'>;
@@ -42,10 +44,16 @@ interface CreateReferralDialogProps {
     client_selected_carehero?: string;
     estimated_service_start_date?: string;
     internal_notes?: string;
+    screenshot_url?: string;
   }) => Promise<void>;
 }
 
 const agencies = ['CICOA', 'LifeStream', 'REAL Services', 'Area 10', 'Other'];
+const careheroOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+];
 
 export function CreateReferralDialog({
   open,
@@ -54,7 +62,12 @@ export function CreateReferralDialog({
   onSubmit,
 }: CreateReferralDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState('');
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     client_name: '',
     county: '',
@@ -65,7 +78,7 @@ export function CreateReferralDialog({
     maximus_assessment_required: false,
     assessment_scheduled_date: '',
     loc_status: 'pending' as LocOutcome,
-    client_selected_carehero: '',
+    client_selected_carehero: 'pending',
     estimated_service_start_date: '',
     internal_notes: '',
   });
@@ -82,10 +95,75 @@ export function CreateReferralDialog({
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        return;
+      }
+      setScreenshotFile(file);
+      
+      // Create preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setScreenshotPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setScreenshotPreview(null);
+      }
+    }
+  };
+
+  const removeScreenshot = () => {
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadScreenshot = async (): Promise<string | null> => {
+    if (!screenshotFile) return null;
+    
+    setUploading(true);
+    try {
+      const fileExt = screenshotFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `referrals/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('referral-screenshots')
+        .upload(filePath, screenshotFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('referral-screenshots')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading screenshot:', error);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Upload screenshot first if selected
+      const screenshotUrl = await uploadScreenshot();
+
       await onSubmit({
         client_lead_id: selectedClientId || undefined,
         ...formData,
@@ -94,9 +172,13 @@ export function CreateReferralDialog({
         client_selected_carehero: formData.client_selected_carehero || undefined,
         estimated_service_start_date: formData.estimated_service_start_date || undefined,
         internal_notes: formData.internal_notes || undefined,
+        screenshot_url: screenshotUrl || undefined,
       });
+      
       // Reset form
       setSelectedClientId('');
+      setScreenshotFile(null);
+      setScreenshotPreview(null);
       setFormData({
         client_name: '',
         county: '',
@@ -107,7 +189,7 @@ export function CreateReferralDialog({
         maximus_assessment_required: false,
         assessment_scheduled_date: '',
         loc_status: 'pending',
-        client_selected_carehero: '',
+        client_selected_carehero: 'pending',
         estimated_service_start_date: '',
         internal_notes: '',
       });
@@ -226,6 +308,54 @@ export function CreateReferralDialog({
             />
           </div>
 
+          {/* Screenshot Upload */}
+          <div className="space-y-2">
+            <Label>Upload Screenshot or Confirmation</Label>
+            <div className="border-2 border-dashed rounded-lg p-4 text-center">
+              {screenshotFile ? (
+                <div className="space-y-2">
+                  {screenshotPreview ? (
+                    <img
+                      src={screenshotPreview}
+                      alt="Screenshot preview"
+                      className="max-h-32 mx-auto rounded"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                      <FileImage className="h-8 w-8" />
+                      <span>{screenshotFile.name}</span>
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={removeScreenshot}
+                  >
+                    <X className="h-4 w-4 mr-1" /> Remove
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="cursor-pointer py-4"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Click to upload image or PDF (max 5MB)
+                  </p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+
           <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
             <h4 className="font-medium">Assessment Information</h4>
             
@@ -276,15 +406,24 @@ export function CreateReferralDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="carehero">Selected CareHero</Label>
-              <Input
-                id="carehero"
+              <Label htmlFor="carehero">Client Selected CareHero?</Label>
+              <Select
                 value={formData.client_selected_carehero}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, client_selected_carehero: e.target.value }))
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, client_selected_carehero: value }))
                 }
-                placeholder="Provider name"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {careheroOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="start_date">Est. Service Start</Label>
@@ -317,9 +456,9 @@ export function CreateReferralDialog({
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.client_name || !formData.county}
+              disabled={loading || uploading || !formData.client_name || !formData.county}
             >
-              {loading ? 'Submitting...' : 'Submit Referral'}
+              {uploading ? 'Uploading...' : loading ? 'Submitting...' : 'Submit Referral'}
             </Button>
           </DialogFooter>
         </form>

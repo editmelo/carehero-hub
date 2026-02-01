@@ -121,6 +121,7 @@ export default function ReferralsPage() {
     client_selected_carehero?: string;
     estimated_service_start_date?: string;
     internal_notes?: string;
+    screenshot_url?: string;
   }) => {
     try {
       const { error } = await supabase.from('internal_referral_tracking').insert({
@@ -137,6 +138,7 @@ export default function ReferralsPage() {
         client_selected_carehero: data.client_selected_carehero || null,
         estimated_service_start_date: data.estimated_service_start_date || null,
         internal_notes: data.internal_notes || null,
+        screenshot_url: data.screenshot_url || null,
         created_by: user?.id || null,
       });
 
@@ -173,6 +175,7 @@ export default function ReferralsPage() {
       client_selected_carehero: string | null;
       estimated_service_start_date: string | null;
       internal_notes: string | null;
+      screenshot_url: string | null;
     }>
   ) => {
     try {

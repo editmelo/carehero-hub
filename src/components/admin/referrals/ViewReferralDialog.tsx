@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Check, X } from 'lucide-react';
+import { ExternalLink, Check, X, FileImage } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,12 +32,27 @@ const formatLocStatus = (status: string | null) => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
+const formatCareHeroStatus = (status: string | null) => {
+  if (!status) return 'Not set';
+  const map: Record<string, string> = {
+    yes: 'Yes',
+    no: 'No',
+    pending: 'Pending',
+  };
+  return map[status.toLowerCase()] || status;
+};
+
 export function ViewReferralDialog({ open, onOpenChange, referral }: ViewReferralDialogProps) {
   if (!referral) return null;
 
+  const isImageUrl = (url: string | null) => {
+    if (!url) return false;
+    return url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Referral Details</DialogTitle>
           <DialogDescription>Full information about this referral submission</DialogDescription>
@@ -74,6 +89,38 @@ export function ViewReferralDialog({ open, onOpenChange, referral }: ViewReferra
             <p className="text-sm font-medium text-muted-foreground">Confirmation Number</p>
             <p className="font-mono">{referral.confirmation_number_or_notes || 'Not provided'}</p>
           </div>
+
+          {/* Screenshot Display */}
+          {referral.screenshot_url && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">Screenshot / Confirmation</p>
+              {isImageUrl(referral.screenshot_url) ? (
+                <a
+                  href={referral.screenshot_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <img
+                    src={referral.screenshot_url}
+                    alt="Referral confirmation"
+                    className="max-h-48 rounded border hover:opacity-90 transition-opacity"
+                  />
+                </a>
+              ) : (
+                <a
+                  href={referral.screenshot_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-primary hover:underline"
+                >
+                  <FileImage className="h-5 w-5" />
+                  View uploaded file
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          )}
 
           <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
             <h4 className="font-medium">Assessment Status</h4>
@@ -113,8 +160,8 @@ export function ViewReferralDialog({ open, onOpenChange, referral }: ViewReferra
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Selected CareHero</p>
-              <p>{referral.client_selected_carehero || 'Not selected'}</p>
+              <p className="text-sm font-medium text-muted-foreground">Client Selected CareHero?</p>
+              <p>{formatCareHeroStatus(referral.client_selected_carehero)}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Est. Service Start</p>

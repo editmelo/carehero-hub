@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Upload, X, FileImage, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 import type { Tables, Database } from '@/integrations/supabase/types';
 
 type InternalReferral = Tables<'internal_referral_tracking'>;
@@ -43,11 +45,17 @@ interface EditReferralDialogProps {
       client_selected_carehero: string | null;
       estimated_service_start_date: string | null;
       internal_notes: string | null;
+      screenshot_url: string | null;
     }>
   ) => Promise<void>;
 }
 
 const agencies = ['CICOA', 'LifeStream', 'REAL Services', 'Area 10', 'Other'];
+const careheroOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+];
 
 export function EditReferralDialog({
   open,
@@ -56,6 +64,12 @@ export function EditReferralDialog({
   onSubmit,
 }: EditReferralDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [existingScreenshot, setExistingScreenshot] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     client_name: '',
     county: '',
@@ -66,7 +80,7 @@ export function EditReferralDialog({
     maximus_assessment_required: false,
     assessment_scheduled_date: '',
     loc_status: 'pending' as LocOutcome,
-    client_selected_carehero: '',
+    client_selected_carehero: 'pending',
     estimated_service_start_date: '',
     internal_notes: '',
   });
@@ -83,18 +97,84 @@ export function EditReferralDialog({
         maximus_assessment_required: referral.maximus_assessment_required,
         assessment_scheduled_date: referral.assessment_scheduled_date || '',
         loc_status: referral.loc_status || 'pending',
-        client_selected_carehero: referral.client_selected_carehero || '',
+        client_selected_carehero: referral.client_selected_carehero || 'pending',
         estimated_service_start_date: referral.estimated_service_start_date || '',
         internal_notes: referral.internal_notes || '',
       });
+      setExistingScreenshot(referral.screenshot_url);
+      setScreenshotFile(null);
+      setScreenshotPreview(null);
     }
   }, [referral]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        return;
+      }
+      setScreenshotFile(file);
+      setExistingScreenshot(null);
+      
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setScreenshotPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setScreenshotPreview(null);
+      }
+    }
+  };
+
+  const removeScreenshot = () => {
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+    setExistingScreenshot(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadScreenshot = async (): Promise<string | null> => {
+    if (!screenshotFile) return existingScreenshot;
+    
+    setUploading(true);
+    try {
+      const fileExt = screenshotFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `referrals/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('referral-screenshots')
+        .upload(filePath, screenshotFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('referral-screenshots')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading screenshot:', error);
+      return existingScreenshot;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!referral) return;
     setLoading(true);
     try {
+      const screenshotUrl = await uploadScreenshot();
+      
       await onSubmit(referral.id, {
         ...formData,
         confirmation_number_or_notes: formData.confirmation_number_or_notes || null,
@@ -102,6 +182,7 @@ export function EditReferralDialog({
         client_selected_carehero: formData.client_selected_carehero || null,
         estimated_service_start_date: formData.estimated_service_start_date || null,
         internal_notes: formData.internal_notes || null,
+        screenshot_url: screenshotUrl,
       });
       onOpenChange(false);
     } finally {
@@ -199,6 +280,76 @@ export function EditReferralDialog({
             />
           </div>
 
+          {/* Screenshot Upload */}
+          <div className="space-y-2">
+            <Label>Upload Screenshot or Confirmation</Label>
+            <div className="border-2 border-dashed rounded-lg p-4 text-center">
+              {screenshotFile || existingScreenshot ? (
+                <div className="space-y-2">
+                  {screenshotPreview ? (
+                    <img
+                      src={screenshotPreview}
+                      alt="Screenshot preview"
+                      className="max-h-32 mx-auto rounded"
+                    />
+                  ) : existingScreenshot ? (
+                    <div className="flex flex-col items-center gap-2">
+                      {existingScreenshot.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                        <img
+                          src={existingScreenshot}
+                          alt="Existing screenshot"
+                          className="max-h-32 rounded"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <FileImage className="h-8 w-8" />
+                          <a
+                            href={existingScreenshot}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline flex items-center gap-1"
+                          >
+                            View file <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ) : screenshotFile ? (
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                      <FileImage className="h-8 w-8" />
+                      <span>{screenshotFile.name}</span>
+                    </div>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={removeScreenshot}
+                  >
+                    <X className="h-4 w-4 mr-1" /> Remove
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="cursor-pointer py-4"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Click to upload image or PDF (max 5MB)
+                  </p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+
           <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
             <h4 className="font-medium">Assessment Information</h4>
             
@@ -249,14 +400,24 @@ export function EditReferralDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="carehero">Selected CareHero</Label>
-              <Input
-                id="carehero"
+              <Label htmlFor="carehero">Client Selected CareHero?</Label>
+              <Select
                 value={formData.client_selected_carehero}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, client_selected_carehero: e.target.value }))
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, client_selected_carehero: value }))
                 }
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {careheroOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="start_date">Est. Service Start</Label>
@@ -286,8 +447,8 @@ export function EditReferralDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Changes'}
+            <Button type="submit" disabled={loading || uploading}>
+              {uploading ? 'Uploading...' : loading ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>

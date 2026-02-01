@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns';
+import { format, addDays, parseISO, isBefore } from 'date-fns';
 import { Link } from 'react-router-dom';
 
 interface DashboardStats {
@@ -119,18 +119,17 @@ export default function DashboardPage() {
       }
 
       if (pendingAssessmentsResult.data) {
-        // Filter to show assessments this week or unscheduled
+        // Filter to show assessments in the next 7 days or unscheduled
         const now = new Date();
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        const nextWeek = addDays(now, 7);
         
-        const thisWeekAssessments = pendingAssessmentsResult.data.filter((assessment) => {
+        const upcomingAssessments = pendingAssessmentsResult.data.filter((assessment) => {
           if (!assessment.assessment_scheduled_date) return true; // Show unscheduled ones
           const assessmentDate = parseISO(assessment.assessment_scheduled_date);
-          return isWithinInterval(assessmentDate, { start: weekStart, end: weekEnd });
+          return !isBefore(assessmentDate, now) && isBefore(assessmentDate, nextWeek);
         });
         
-        setPendingAssessments(thisWeekAssessments.slice(0, 5));
+        setPendingAssessments(upcomingAssessments.slice(0, 5));
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

@@ -25,6 +25,16 @@ const relationships = [
   "Client",
 ];
 
+const hearAboutUsOptions = [
+  "Google Search",
+  "Facebook",
+  "Friend or Family",
+  "Doctor/Healthcare Provider",
+  "Community Event",
+  "Flyer/Brochure",
+  "Other",
+];
+
 export default function ReferPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
@@ -35,6 +45,7 @@ export default function ReferPage() {
     referralName: "",
     referralPhone: "",
     relationship: "",
+    howDidYouHear: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +70,7 @@ export default function ReferPage() {
         county: "Unknown",
         contact_type: "referral_source",
         referral_source: "word_of_mouth",
-        referral_source_notes: `Referred by: ${formData.yourName} (${formData.yourPhone}). Relationship: ${formData.relationship}`,
+        referral_source_notes: `Referred by: ${formData.yourName} (${formData.yourPhone}). Relationship: ${formData.relationship}. How they heard about us: ${formData.howDidYouHear}`,
         lead_status: "new_inquiry",
       });
 
@@ -76,6 +87,7 @@ export default function ReferPage() {
         referralName: "",
         referralPhone: "",
         relationship: "",
+        howDidYouHear: "",
       });
       setHasPermission(false);
     } catch (error) {
@@ -267,7 +279,26 @@ export default function ReferPage() {
                     </div>
                   </div>
 
-                  {/* Permission Checkbox */}
+                  {/* How Did You Hear About Us */}
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-4">How Did You Hear About Us?</h3>
+                    <Select
+                      value={formData.howDidYouHear}
+                      onValueChange={(value) => setFormData({ ...formData, howDidYouHear: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hearAboutUsOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="flex items-start space-x-3 p-4 bg-secondary rounded-lg">
                     <Checkbox
                       id="permission"

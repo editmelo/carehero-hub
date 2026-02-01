@@ -23,6 +23,7 @@ import LeadsPage from "./pages/admin/LeadsPage";
 import PipelinePage from "./pages/admin/PipelinePage";
 import TasksPage from "./pages/admin/TasksPage";
 import ReferralsPage from "./pages/admin/ReferralsPage";
+import ReportsPage from "./pages/admin/ReportsPage";
 import UsersPage from "./pages/admin/UsersPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="pipeline" element={<PipelinePage />} />
               <Route path="tasks" element={<TasksPage />} />
               <Route path="referrals" element={<ReferralsPage />} />
+              <Route path="reports" element={<ReportsPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>

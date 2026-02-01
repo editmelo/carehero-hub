@@ -1,12 +1,26 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import logoColor from "@/assets/logo-color.png";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { href: "/", label: "Home" },
+  { 
+    label: "Info For",
+    isDropdown: true,
+    items: [
+      { href: "/clients", label: "Clients" },
+      { href: "/careers", label: "Caregivers" },
+    ]
+  },
   { href: "/about", label: "About" },
   { href: "/services", label: "Services" },
   { href: "/medicaid", label: "Medicaid Support" },
@@ -39,19 +53,42 @@ export function PublicNavbar() {
 
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`font-medium text-sm transition-colors animated-underline ${
-                  isActive(link.href)
-                    ? "text-accent"
-                    : "text-foreground hover:text-accent"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => 
+              link.isDropdown ? (
+                <DropdownMenu key={link.label}>
+                  <DropdownMenuTrigger className="font-medium text-sm transition-colors text-foreground hover:text-accent flex items-center gap-1 outline-none">
+                    {link.label}
+                    <ChevronDown className="w-4 h-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-background border border-border shadow-lg z-50">
+                    {link.items?.map((item) => (
+                      <DropdownMenuItem key={item.href} asChild>
+                        <Link
+                          to={item.href}
+                          className={`w-full cursor-pointer ${
+                            isActive(item.href) ? "text-accent" : ""
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  key={link.href}
+                  to={link.href!}
+                  className={`font-medium text-sm transition-colors animated-underline ${
+                    isActive(link.href!)
+                      ? "text-accent"
+                      : "text-foreground hover:text-accent"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
           </div>
 
           {/* Desktop CTAs */}
@@ -88,20 +125,42 @@ export function PublicNavbar() {
             className="lg:hidden bg-background border-b border-border"
           >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`py-3 px-4 rounded-lg font-medium transition-colors ${
-                    isActive(link.href)
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) => 
+                link.isDropdown ? (
+                  <div key={link.label} className="flex flex-col gap-1">
+                    <span className="py-2 px-4 font-medium text-muted-foreground text-sm">
+                      {link.label}
+                    </span>
+                    {link.items?.map((item) => (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => setIsOpen(false)}
+                        className={`py-3 px-6 rounded-lg font-medium transition-colors ${
+                          isActive(item.href)
+                            ? "bg-accent text-accent-foreground"
+                            : "hover:bg-muted"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <Link
+                    key={link.href}
+                    to={link.href!}
+                    onClick={() => setIsOpen(false)}
+                    className={`py-3 px-4 rounded-lg font-medium transition-colors ${
+                      isActive(link.href!)
+                        ? "bg-accent text-accent-foreground"
+                        : "hover:bg-muted"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
               <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border">
                 <Link to="/refer" onClick={() => setIsOpen(false)}>
                   <Button variant="outline" className="w-full">

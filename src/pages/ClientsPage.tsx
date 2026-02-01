@@ -339,7 +339,7 @@ export default function ClientsPage() {
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button variant="outline" size="xl" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                <Button variant="outline" size="xl" className="bg-white text-primary border-white hover:bg-white/90">
                   <Phone className="w-5 h-5" />
                   Contact Us
                 </Button>

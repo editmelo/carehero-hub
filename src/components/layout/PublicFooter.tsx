@@ -155,6 +155,9 @@ export function PublicFooter() {
             <Link to="/hipaa" className="hover:text-primary-foreground transition-colors">
               HIPAA Disclaimer
             </Link>
+            <Link to="/auth" className="hover:text-primary-foreground transition-colors">
+              Staff Portal
+            </Link>
           </div>
         </div>
       </div>

@@ -14,6 +14,7 @@ import ReferPage from "./pages/ReferPage";
 import GetStartedPage from "./pages/GetStartedPage";
 import HipaaPage from "./pages/HipaaPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/get-started" element={<GetStartedPage />} />
             <Route path="/hipaa" element={<HipaaPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

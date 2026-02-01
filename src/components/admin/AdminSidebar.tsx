@@ -8,7 +8,8 @@ import {
   ChevronLeft,
   Bell,
   UserCog,
-  Building
+  Building,
+  BarChart3
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,6 +37,7 @@ const mainNavItems = [
   { title: 'Enrollment Pipeline', url: '/admin/pipeline', icon: ClipboardList },
   { title: 'Follow-up Tasks', url: '/admin/tasks', icon: Bell },
   { title: 'Referral Tracking', url: '/admin/referrals', icon: FileText },
+  { title: 'Weekly Reports', url: '/admin/reports', icon: BarChart3 },
 ];
 
 const adminNavItems = [

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Plus, AlertCircle } from 'lucide-react';
+import { Plus, AlertCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { toCSV, downloadCSV, formatDateForCSV, formatStatusForCSV } from '@/lib/csv-export';
 import type { Tables, Database } from '@/integrations/supabase/types';
 import {
   ReferralStatsCards,
@@ -224,6 +225,39 @@ export default function ReferralsPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    try {
+      const csvContent = toCSV(filteredReferrals, [
+        { key: 'client_name', header: 'Client Name' },
+        { key: 'county', header: 'County' },
+        { key: 'referral_submitted_to', header: 'Submitted To' },
+        { key: 'date_referral_submitted', header: 'Date Submitted', formatter: (v) => formatDateForCSV(v as string) },
+        { key: 'referral_submitted_online', header: 'Online', formatter: (v) => v ? 'Yes' : 'No' },
+        { key: 'confirmation_number_or_notes', header: 'Confirmation #' },
+        { key: 'loc_status', header: 'LOC Status', formatter: (v) => formatStatusForCSV(v as string) },
+        { key: 'maximus_assessment_required', header: 'Assessment Required', formatter: (v) => v ? 'Yes' : 'No' },
+        { key: 'assessment_scheduled_date', header: 'Assessment Date', formatter: (v) => formatDateForCSV(v as string) },
+        { key: 'client_selected_carehero', header: 'Selected CareHero' },
+        { key: 'estimated_service_start_date', header: 'Est. Start Date', formatter: (v) => formatDateForCSV(v as string) },
+        { key: 'internal_notes', header: 'Internal Notes' },
+        { key: 'created_at', header: 'Created', formatter: (v) => formatDateForCSV(v as string) },
+      ]);
+
+      downloadCSV(csvContent, 'referrals');
+      toast({
+        title: 'Export successful',
+        description: `Exported ${filteredReferrals.length} referrals to CSV`,
+      });
+    } catch (error) {
+      console.error('Error exporting referrals:', error);
+      toast({
+        title: 'Export failed',
+        description: 'Failed to export referrals to CSV',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (!hasPortalAccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
@@ -241,12 +275,18 @@ export default function ReferralsPage() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Referral Tracking</h1>
           <p className="text-muted-foreground">Track internal Medicaid and AAA referral submissions</p>
         </div>
-        {canModifyData && (
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Submit Referral
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
           </Button>
-        )}
+          {canModifyData && (
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Submit Referral
+            </Button>
+          )}
+        </div>
       </div>
 
       <ReferralStatsCards stats={stats} />

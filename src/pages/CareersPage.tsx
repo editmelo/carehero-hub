@@ -48,6 +48,22 @@ const hearAboutUsOptions = [
   "Other",
 ];
 
+const languageOptions = [
+  "English",
+  "Spanish",
+  "Burmese",
+  "French",
+  "Chinese (Mandarin)",
+  "Chinese (Cantonese)",
+  "Vietnamese",
+  "Arabic",
+  "Hindi",
+  "Tagalog",
+  "Korean",
+  "Haitian Creole",
+  "Other",
+];
+
 const benefits = [
   {
     icon: DollarSign,
@@ -350,14 +366,22 @@ export default function CareersPage() {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="primaryLanguage">Primary Language Spoken *</Label>
-                    <Input
-                      id="primaryLanguage"
+                    <Label>Primary Language Spoken *</Label>
+                    <Select
                       value={formData.primaryLanguage}
-                      onChange={(e) => setFormData({ ...formData, primaryLanguage: e.target.value })}
-                      required
-                      placeholder="e.g., English, Spanish"
-                    />
+                      onValueChange={(value) => setFormData({ ...formData, primaryLanguage: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languageOptions.map((lang) => (
+                          <SelectItem key={lang} value={lang}>
+                            {lang}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="currentAgency">Current Agency</Label>

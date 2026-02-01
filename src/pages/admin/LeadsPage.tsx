@@ -10,7 +10,8 @@ import {
   Edit,
   Trash2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,6 +63,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { CreateLeadDialog, EditLeadDialog, BulkActionsBar } from '@/components/admin/leads';
+import { toCSV, downloadCSV, formatDateForCSV, formatStatusForCSV } from '@/lib/csv-export';
 import type { Tables, Database } from '@/integrations/supabase/types';
 
 type ClientLead = Tables<'client_leads'>;
@@ -216,6 +218,56 @@ export default function LeadsPage() {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      // Fetch all leads (not paginated) for export
+      let query = supabase
+        .from('client_leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (statusFilter !== 'all') {
+        query = query.eq('lead_status', statusFilter as Database['public']['Enums']['lead_status']);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const csvContent = toCSV(data || [], [
+        { key: 'client_first_name', header: 'First Name' },
+        { key: 'client_last_name', header: 'Last Name' },
+        { key: 'phone_number', header: 'Phone' },
+        { key: 'email', header: 'Email' },
+        { key: 'county', header: 'County' },
+        { key: 'city', header: 'City' },
+        { key: 'zip_code', header: 'Zip Code' },
+        { key: 'home_address', header: 'Address' },
+        { key: 'lead_status', header: 'Status', formatter: (v) => formatStatusForCSV(v as string) },
+        { key: 'contact_type', header: 'Contact Type', formatter: (v) => formatStatusForCSV(v as string) },
+        { key: 'initial_need', header: 'Initial Need', formatter: (v) => formatStatusForCSV(v as string) },
+        { key: 'insurance_status', header: 'Insurance', formatter: (v) => formatStatusForCSV(v as string) },
+        { key: 'referral_source', header: 'Referral Source', formatter: (v) => formatStatusForCSV(v as string) },
+        { key: 'referral_source_notes', header: 'Referral Notes' },
+        { key: 'notes', header: 'Notes' },
+        { key: 'created_at', header: 'Created', formatter: (v) => formatDateForCSV(v as string) },
+        { key: 'updated_at', header: 'Updated', formatter: (v) => formatDateForCSV(v as string) },
+      ]);
+
+      downloadCSV(csvContent, 'client_leads');
+      toast({
+        title: 'Export successful',
+        description: `Exported ${data?.length || 0} leads to CSV`,
+      });
+    } catch (error) {
+      console.error('Error exporting leads:', error);
+      toast({
+        title: 'Export failed',
+        description: 'Failed to export leads to CSV',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   if (!hasPortalAccess) {
@@ -233,9 +285,15 @@ export default function LeadsPage() {
           <h1 className="text-3xl font-heading font-bold text-foreground">Client Leads</h1>
           <p className="text-muted-foreground">Manage and track all client inquiries</p>
         </div>
-        {canModifyData && (
-          <CreateLeadDialog onSuccess={fetchLeads} />
-        )}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          {canModifyData && (
+            <CreateLeadDialog onSuccess={fetchLeads} />
+          )}
+        </div>
       </div>
 
       {/* Filters */}

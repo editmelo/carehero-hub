@@ -123,7 +123,7 @@ export default function CareersPage() {
               Earn Up to $24/hr
             </div>
             <h1 className="font-heading text-4xl md:text-5xl font-bold mb-6">
-              Join the CareHero Team
+              Become a CareHero
             </h1>
             <p className="text-lg text-primary-foreground/80">
               Make a difference in people's lives. Become a caregiver with CareHero 

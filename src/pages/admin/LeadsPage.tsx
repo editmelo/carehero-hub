@@ -46,6 +46,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
@@ -80,6 +90,8 @@ export default function LeadsPage() {
   const [selectedLead, setSelectedLead] = useState<ClientLead | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState<ClientLead | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 10;
@@ -154,14 +166,14 @@ export default function LeadsPage() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleDeleteLead = async (leadId: string) => {
-    if (!isAdmin) return;
+  const handleDeleteLead = async () => {
+    if (!isAdmin || !leadToDelete) return;
 
     try {
       const { error } = await supabase
         .from('client_leads')
         .delete()
-        .eq('id', leadId);
+        .eq('id', leadToDelete.id);
 
       if (error) throw error;
 
@@ -169,6 +181,8 @@ export default function LeadsPage() {
         title: 'Lead deleted',
         description: 'The client lead has been removed.',
       });
+      setDeleteDialogOpen(false);
+      setLeadToDelete(null);
       fetchLeads();
     } catch (error) {
       console.error('Error deleting lead:', error);
@@ -331,7 +345,10 @@ export default function LeadsPage() {
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     className="text-destructive"
-                                    onClick={() => handleDeleteLead(lead.id)}
+                                    onClick={() => {
+                                      setLeadToDelete(lead);
+                                      setDeleteDialogOpen(true);
+                                    }}
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" /> Delete
                                   </DropdownMenuItem>
@@ -472,6 +489,33 @@ export default function LeadsPage() {
         onOpenChange={setEditDialogOpen}
         onSuccess={fetchLeads}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Client Lead</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the lead for{' '}
+              <span className="font-semibold">
+                {leadToDelete?.client_first_name} {leadToDelete?.client_last_name}
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setLeadToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLead}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

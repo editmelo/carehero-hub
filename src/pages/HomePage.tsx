@@ -1,11 +1,17 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  Heart, Shield, Clock, Users, Award, CheckCircle, 
+  Shield, Clock, Users, Award, CheckCircle, 
   ArrowRight, Star, Phone, HandHeart, Home as HomeIcon,
-  Sparkles, Activity
+  Sparkles, Activity, ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import heroImage from "@/assets/hero-care.jpg";
 
 const services = [
@@ -64,6 +70,29 @@ const testimonials = [
   },
 ];
 
+const faqs = [
+  {
+    question: "How quickly can I start working?",
+    answer: "Most caregivers are approved within 24–48 hours after submitting documents and completing training."
+  },
+  {
+    question: "Do I have to leave my current clients?",
+    answer: "No! CareHero Home Care Services lets you keep the clients you already work with. We make the transition seamless."
+  },
+  {
+    question: "Is the up to $24/hour guaranteed?",
+    answer: "Yes. As long as you're working with approved clients and logging hours through the app, you earn up to $24/hour."
+  },
+  {
+    question: "How do I get paid?",
+    answer: "You'll be paid weekly via direct deposit. You can track earnings and download pay stubs directly from the app."
+  },
+  {
+    question: "Can I switch to CareHero Home Care Services and keep my caregiver?",
+    answer: "Yes! If you're a client who loves your caregiver, we'll help you switch agencies while keeping the same person in your home."
+  },
+];
+
 export default function HomePage() {
   return (
     <div className="overflow-hidden">
@@ -117,11 +146,9 @@ export default function HomePage() {
                 </Link>
               </div>
               <div className="mt-8 flex items-center gap-6">
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-10 h-10 rounded-full bg-primary-foreground/20 border-2 border-primary-foreground flex items-center justify-center">
-                      <Star className="w-4 h-4 text-gold" />
-                    </div>
+                <div className="flex -space-x-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} className="w-6 h-6 text-gold fill-gold" />
                   ))}
                 </div>
                 <p className="text-sm text-primary-foreground/80">
@@ -321,6 +348,49 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* FAQs Section */}
+      <section className="py-20 subtle-gradient">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Have questions? We've got answers.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mx-auto"
+          >
+            <Accordion type="single" collapsible className="space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem 
+                  key={index} 
+                  value={`item-${index}`}
+                  className="bg-background rounded-xl border border-border px-6 shadow-sm"
+                >
+                  <AccordionTrigger className="text-left font-heading font-semibold text-foreground hover:no-underline py-6">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-6">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 hero-gradient">
         <div className="container mx-auto px-4">
@@ -344,10 +414,10 @@ export default function HomePage() {
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
-              <a href="tel:+13179001234">
+              <a href="tel:+18556227324">
                 <Button variant="heroOutline" size="xl">
                   <Phone className="w-5 h-5" />
-                  (317) 900-1234
+                  (855) 6CARE24
                 </Button>
               </a>
             </div>

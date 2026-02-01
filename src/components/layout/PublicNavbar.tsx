@@ -1,21 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Phone, Heart } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import logoColor from "@/assets/logo-color.png";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/services", label: "Services" },
   { href: "/medicaid", label: "Medicaid Support" },
-  { href: "/careers", label: "Careers" },
   { href: "/contact", label: "Contact" },
 ];
 
 export function PublicNavbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -24,14 +29,12 @@ export function PublicNavbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-              <Heart className="w-6 h-6 text-accent-foreground" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-heading font-bold text-xl text-primary">CareHero</span>
-              <span className="text-xs text-muted-foreground -mt-1">Home Care</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={logoColor} 
+              alt="CareHero Home Care" 
+              className="h-14 w-auto"
+            />
           </Link>
 
           {/* Desktop Nav */}
@@ -53,10 +56,6 @@ export function PublicNavbar() {
 
           {/* Desktop CTAs */}
           <div className="hidden lg:flex items-center gap-4">
-            <a href="tel:+13179001234" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              <Phone className="w-4 h-4" />
-              (317) 900-1234
-            </a>
             <Link to="/refer">
               <Button variant="outline" size="sm">
                 Refer Someone

@@ -149,6 +149,9 @@ export function PublicFooter() {
             <Link to="/privacy" className="hover:text-primary-foreground transition-colors">
               Privacy Policy
             </Link>
+            <Link to="/terms" className="hover:text-primary-foreground transition-colors">
+              Terms of Service
+            </Link>
             <Link to="/hipaa" className="hover:text-primary-foreground transition-colors">
               HIPAA Disclaimer
             </Link>

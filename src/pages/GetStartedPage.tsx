@@ -576,8 +576,8 @@ export default function GetStartedPage() {
             <div className="mt-8 text-center">
               <p className="text-muted-foreground">
                 Questions? Call us at{" "}
-                <a href="tel:+13179001234" className="text-accent hover:underline font-medium">
-                  (317) 900-1234
+                <a href="tel:+18556227324" className="text-accent hover:underline font-medium">
+                  (855) 6CARE24
                 </a>
               </p>
             </div>

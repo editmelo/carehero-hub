@@ -257,10 +257,10 @@ export default function MedicaidPage() {
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
-              <a href="tel:+13179001234">
+              <a href="tel:+18556227324">
                 <Button variant="heroOutline" size="xl">
                   <Phone className="w-5 h-5" />
-                  (317) 900-1234
+                  (855) 6CARE24
                 </Button>
               </a>
             </div>

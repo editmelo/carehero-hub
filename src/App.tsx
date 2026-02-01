@@ -11,6 +11,7 @@ import AboutPage from "./pages/AboutPage";
 import ServicesPage from "./pages/ServicesPage";
 import MedicaidPage from "./pages/MedicaidPage";
 import CareersPage from "./pages/CareersPage";
+import ClientsPage from "./pages/ClientsPage";
 import ContactPage from "./pages/ContactPage";
 import ReferPage from "./pages/ReferPage";
 import GetStartedPage from "./pages/GetStartedPage";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/about" element={<AboutPage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/medicaid" element={<MedicaidPage />} />
+              <Route path="/clients" element={<ClientsPage />} />
               <Route path="/careers" element={<CareersPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/refer" element={<ReferPage />} />

@@ -5,6 +5,12 @@ import {
   ArrowRight, UserCheck, FileText, Headphones, Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const whyChooseUs = [
   {
@@ -93,6 +99,41 @@ const peaceOfMind = [
     icon: FileText,
     title: "Transparent Documentation",
     description: "Clear records and communication so you always know what's happening with your care.",
+  },
+];
+
+const faqs = [
+  {
+    question: "What services does CareHero provide?",
+    answer: "CareHero provides non-medical home care services including personal care assistance (bathing, dressing, grooming), companionship, meal preparation, light housekeeping, medication reminders, transportation to appointments, and respite care for family caregivers. We specialize in helping with activities of daily living (ADLs)."
+  },
+  {
+    question: "How do I know if I qualify for Medicaid-covered home care?",
+    answer: "Eligibility for Indiana's Medicaid waiver programs depends on factors like age, disability status, income level, and care needs. Our team can help you understand your options and guide you through the application process. Contact us for a free eligibility assessment."
+  },
+  {
+    question: "How are caregivers selected and trained?",
+    answer: "All CareHero caregivers undergo thorough background checks, reference verification, and skills assessments. They receive ongoing training in personal care, safety protocols, and communication. We carefully match caregivers with clients based on needs, personality, and preferences to ensure the best possible relationship."
+  },
+  {
+    question: "Can I choose my own caregiver?",
+    answer: "Yes! We believe the caregiver-client relationship is essential to quality care. You'll meet potential caregivers and have input in the selection process. If you have a family member or friend who wants to become your caregiver, we can help with that process too."
+  },
+  {
+    question: "What if I need to change my schedule or caregiver?",
+    answer: "We understand that needs change. You can adjust your care schedule at any time by contacting our office. If you'd like to change caregivers for any reason, we'll work with you to find a better match. Our 24/7 support line is available for urgent schedule changes."
+  },
+  {
+    question: "Is there a cost to me for services?",
+    answer: "For clients who qualify for Indiana's Medicaid waiver programs, services are typically covered at no out-of-pocket cost. For private pay clients, we offer competitive rates. Contact us for a personalized assessment and pricing information."
+  },
+  {
+    question: "How quickly can services begin?",
+    answer: "Once you're approved for services through the Medicaid waiver program or choose private pay, we can typically begin care within 1-2 weeks. We'll work to match you with the right caregiver and create a care plan that meets your needs."
+  },
+  {
+    question: "What areas does CareHero serve?",
+    answer: "CareHero provides home care services throughout Central Indiana, including Indianapolis and surrounding counties. Contact us to confirm service availability in your specific area."
   },
 ];
 
@@ -312,6 +353,49 @@ export default function ClientsPage() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Have questions? We have answers. Here are some of the most common questions we receive.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mx-auto"
+          >
+            <Accordion type="single" collapsible className="space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem 
+                  key={index} 
+                  value={`item-${index}`}
+                  className="card-elevated px-6 border-none"
+                >
+                  <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </motion.div>
         </div>
       </section>
 

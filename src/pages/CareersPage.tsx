@@ -7,10 +7,46 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+const daysOfWeek = [
+  "Monday",
+  "Tuesday", 
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+const scheduleOptions = [
+  "Not Available",
+  "Morning (6am-12pm)",
+  "Afternoon (12pm-6pm)",
+  "Evening (6pm-12am)",
+  "All Day",
+  "Flexible",
+];
+
+const hearAboutUsOptions = [
+  "Google Search",
+  "Facebook",
+  "Indeed",
+  "Other Job Site",
+  "Friend or Family",
+  "Current/Former Employee",
+  "Community Event",
+  "Other",
+];
 
 const benefits = [
   {
@@ -55,6 +91,10 @@ const requirements = [
   "Previous caregiving experience preferred (not required)",
 ];
 
+type ScheduleState = {
+  [key: string]: string;
+};
+
 export default function CareersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -62,23 +102,48 @@ export default function CareersPage() {
     fullName: "",
     email: "",
     phone: "",
-    experience: "",
-    availability: "",
-    notes: "",
+    city: "",
+    zipCode: "",
+    primaryLanguage: "",
+    currentAgency: "",
+    howDidYouHear: "",
   });
+  const [schedule, setSchedule] = useState<ScheduleState>({
+    Monday: "",
+    Tuesday: "",
+    Wednesday: "",
+    Thursday: "",
+    Friday: "",
+    Saturday: "",
+    Sunday: "",
+  });
+
+  const formatScheduleForSubmission = () => {
+    const scheduleParts = Object.entries(schedule)
+      .filter(([_, value]) => value && value !== "Not Available")
+      .map(([day, value]) => `${day}: ${value}`);
+    return scheduleParts.length > 0 ? scheduleParts.join("; ") : "Not specified";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      const experienceInfo = [
+        formData.city && `City: ${formData.city}`,
+        formData.zipCode && `Zip: ${formData.zipCode}`,
+        formData.primaryLanguage && `Language: ${formData.primaryLanguage}`,
+        formData.currentAgency && `Current Agency: ${formData.currentAgency}`,
+      ].filter(Boolean).join("; ");
+
       const { error } = await supabase.from("job_applications").insert({
         full_name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
-        experience: formData.experience,
-        availability: formData.availability,
-        notes: formData.notes,
+        experience: experienceInfo || null,
+        availability: formatScheduleForSubmission(),
+        notes: formData.howDidYouHear ? `How they heard about us: ${formData.howDidYouHear}` : null,
       });
 
       if (error) throw error;
@@ -92,9 +157,20 @@ export default function CareersPage() {
         fullName: "",
         email: "",
         phone: "",
-        experience: "",
-        availability: "",
-        notes: "",
+        city: "",
+        zipCode: "",
+        primaryLanguage: "",
+        currentAgency: "",
+        howDidYouHear: "",
+      });
+      setSchedule({
+        Monday: "",
+        Tuesday: "",
+        Wednesday: "",
+        Thursday: "",
+        Friday: "",
+        Saturday: "",
+        Sunday: "",
       });
     } catch (error) {
       toast({
@@ -251,33 +327,93 @@ export default function CareersPage() {
                       />
                     </div>
                   </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        required
+                        placeholder="Indianapolis"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="zipCode">Zip Code *</Label>
+                      <Input
+                        id="zipCode"
+                        value={formData.zipCode}
+                        onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                        required
+                        placeholder="46204"
+                      />
+                    </div>
+                  </div>
                   <div>
-                    <Label htmlFor="experience">Caregiving Experience</Label>
+                    <Label htmlFor="primaryLanguage">Primary Language Spoken *</Label>
                     <Input
-                      id="experience"
-                      value={formData.experience}
-                      onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                      placeholder="e.g., 2 years home care, CNA certified"
+                      id="primaryLanguage"
+                      value={formData.primaryLanguage}
+                      onChange={(e) => setFormData({ ...formData, primaryLanguage: e.target.value })}
+                      required
+                      placeholder="e.g., English, Spanish"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="availability">Availability</Label>
+                    <Label htmlFor="currentAgency">Current Agency</Label>
                     <Input
-                      id="availability"
-                      value={formData.availability}
-                      onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
-                      placeholder="e.g., Full-time, weekdays"
+                      id="currentAgency"
+                      value={formData.currentAgency}
+                      onChange={(e) => setFormData({ ...formData, currentAgency: e.target.value })}
+                      placeholder="Current or previous home care agency (if any)"
                     />
                   </div>
+
+                  {/* Preferred Care Schedule */}
                   <div>
-                    <Label htmlFor="notes">Additional Information</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      placeholder="Tell us about yourself..."
-                      rows={4}
-                    />
+                    <Label className="mb-3 block">Preferred Care Schedule (Days & Hours) *</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {daysOfWeek.map((day) => (
+                        <div key={day} className="flex items-center gap-2">
+                          <span className="w-24 text-sm font-medium text-foreground">{day}</span>
+                          <Select
+                            value={schedule[day]}
+                            onValueChange={(value) => setSchedule({ ...schedule, [day]: value })}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Select hours" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {scheduleOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* How Did You Hear About Us */}
+                  <div>
+                    <Label>How did you hear about CareHero? *</Label>
+                    <Select
+                      value={formData.howDidYouHear}
+                      onValueChange={(value) => setFormData({ ...formData, howDidYouHear: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hearAboutUsOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
                     type="submit"

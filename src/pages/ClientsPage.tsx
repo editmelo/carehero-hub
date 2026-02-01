@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
   Heart, Shield, Clock, Users, Phone, CheckCircle, 
-  ArrowRight, UserCheck, FileText, Headphones, Star
+  ArrowRight, UserCheck, FileText, Headphones, Star, Quote
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -137,6 +137,33 @@ const faqs = [
   },
 ];
 
+const testimonials = [
+  {
+    quote: "CareHero has been a blessing for our family. My mother's caregiver, Maria, treats her like her own grandmother. The consistency and compassion we've experienced is beyond what we hoped for.",
+    name: "Sarah M.",
+    relationship: "Daughter of Client",
+    location: "Indianapolis, IN",
+  },
+  {
+    quote: "After trying two other agencies, we finally found CareHero. The difference is night and day. They actually listen to what we need and matched us with the perfect caregiver.",
+    name: "James T.",
+    relationship: "Son of Client", 
+    location: "Carmel, IN",
+  },
+  {
+    quote: "The team helped us navigate the Medicaid process when we didn't know where to start. Now my husband gets the daily care he needs, and I finally have some peace of mind.",
+    name: "Dorothy L.",
+    relationship: "Wife of Client",
+    location: "Fishers, IN",
+  },
+  {
+    quote: "What I appreciate most is the communication. I always know when the caregiver arrives and leaves, and the office responds quickly whenever I have questions.",
+    name: "Michael R.",
+    relationship: "Family Caregiver",
+    location: "Greenwood, IN",
+  },
+];
+
 export default function ClientsPage() {
   return (
     <div className="overflow-hidden">
@@ -208,6 +235,53 @@ export default function ClientsPage() {
                 <p className="text-sm text-muted-foreground">
                   {item.description}
                 </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 subtle-gradient">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
+              What Our Clients Say
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Hear from families who have experienced the CareHero difference.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={testimonial.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="card-elevated p-8 relative"
+              >
+                <Quote className="w-10 h-10 text-accent/20 absolute top-6 right-6" />
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-gold text-gold" />
+                  ))}
+                </div>
+                <p className="text-foreground mb-6 italic leading-relaxed">
+                  "{testimonial.quote}"
+                </p>
+                <div className="border-t border-border pt-4">
+                  <p className="font-semibold text-foreground">{testimonial.name}</p>
+                  <p className="text-sm text-muted-foreground">{testimonial.relationship}</p>
+                  <p className="text-xs text-muted-foreground">{testimonial.location}</p>
+                </div>
               </motion.div>
             ))}
           </div>

@@ -14,14 +14,15 @@ const contactInfo = [
   {
     icon: Phone,
     title: "Phone",
-    content: "(317) 900-1234",
-    link: "tel:+13179001234",
+    content: "(855) 6CARE24",
+    subContent: "(855) 622-7324",
+    link: "tel:+18556227324",
   },
   {
     icon: Mail,
     title: "Email",
-    content: "care@careherohomecare.com",
-    link: "mailto:care@careherohomecare.com",
+    content: "info@careherohomecare.com",
+    link: "mailto:info@careherohomecare.com",
   },
   {
     icon: MapPin,
